@@ -1,27 +1,35 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const PORT = process.env.PORT || 3000;
-const userModel = require('./model/model')
+const userModel = require('./model/model');
+
+const dotenv = require("dotenv")
+const bcrypt = require("bcrypt")
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect("mongodb+srv://sivajeeva459:siva123@cluster0.yxfdq.mongodb.net/first?retryWrites=true&w=majority&appName=Cluster0");
+dotenv.config();
+const PORT = process.env.PORT || 3000;
+const Mongo_url = process.env.Mongo_url;
 
-app.post('/register', (req, res) => {
+mongoose.connect(Mongo_url)
+.then(()=>console.log("mongodb connected"))
+.catch((err)=>console.log("error founded",err))
+
+app.post('/register', async(req, res) => {
     const { name, email, password } = req.body
+    const hasedpassword = await bcrypt.hash(password,10)
     userModel.findOne({ email:email})
         .then((user) => {
            if(user)
-           {
-            res.json("already have an account")
-           }
+            {
+             res.json("already have an account")
+            }
            else
            {
-            userModel.create({ name: name, email: email, password: password })
+            userModel.create({ name: name, email: email, password: hasedpassword })
             res.json("successfully registerd")
            }
         }).catch((err) => {
@@ -35,7 +43,7 @@ app.post("/signup", (req, res) => {
         .then((user) => {
             if (user) {
                 if (user.password === password) {
-                    res.json("login successfully")
+                    res.json("login successfully") 
                 }
                 else {
                     res.json("password inccorrect")
